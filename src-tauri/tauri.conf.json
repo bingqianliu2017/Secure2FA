@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Secure2FA",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.secure2fa.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,13 +12,15 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Secure2FA",
         "width": 380,
         "height": 520,
         "minWidth": 340,
         "minHeight": 420,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": false
       }
     ],
     "security": {

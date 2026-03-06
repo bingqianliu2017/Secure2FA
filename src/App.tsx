@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { EntryCard } from "./components/EntryCard";
 import { EntryForm } from "./components/EntryForm";
+import { TitleBar } from "./components/TitleBar";
+import { CloseConfirmDialog } from "./components/CloseConfirmDialog";
 import { loadVault, saveVault } from "./core/storage";
 import type { TOTPEntry, VaultData } from "./types";
 
@@ -10,6 +12,27 @@ export default function App() {
   const [view, setView] = useState<View>("main");
   const [vault, setVault] = useState<VaultData>({ entries: [] });
   const [editingEntry, setEditingEntry] = useState<TOTPEntry | null>(null);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+
+  const handleMinimizeToTray = async () => {
+    setShowCloseDialog(false);
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().hide();
+    } catch {
+      /* not in Tauri */
+    }
+  };
+
+  const handleQuit = async () => {
+    setShowCloseDialog(false);
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().destroy();
+    } catch {
+      /* not in Tauri */
+    }
+  };
 
   useEffect(() => {
     loadVault().then(setVault);
@@ -50,7 +73,9 @@ export default function App() {
 
   if (view === "add" || view === "edit") {
     return (
-      <div className="app">
+      <div className="app-wrapper">
+        <TitleBar onCloseClick={() => setShowCloseDialog(true)} />
+        <div className="app">
         <EntryForm
           entry={view === "edit" ? editingEntry : null}
           onSave={handleSaveEntry}
@@ -59,6 +84,14 @@ export default function App() {
             setView("main");
           }}
         />
+        </div>
+      {showCloseDialog && (
+        <CloseConfirmDialog
+          onMinimizeToTray={handleMinimizeToTray}
+          onQuit={handleQuit}
+          onCancel={() => setShowCloseDialog(false)}
+        />
+      )}
       </div>
     );
   }
@@ -66,7 +99,9 @@ export default function App() {
   const entries = vault.entries;
 
   return (
-    <div className="app">
+    <div className="app-wrapper">
+      <TitleBar onCloseClick={() => setShowCloseDialog(true)} />
+      <div className="app">
       <header className="app-header">
         <h1>Secure2FA</h1>
         <button
@@ -107,6 +142,14 @@ export default function App() {
           </div>
         )}
       </main>
+      </div>
+      {showCloseDialog && (
+        <CloseConfirmDialog
+          onMinimizeToTray={handleMinimizeToTray}
+          onQuit={handleQuit}
+          onCancel={() => setShowCloseDialog(false)}
+        />
+      )}
     </div>
   );
 }
