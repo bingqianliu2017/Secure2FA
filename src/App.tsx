@@ -17,8 +17,8 @@ export default function App() {
   const handleMinimizeToTray = async () => {
     setShowCloseDialog(false);
     try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().hide();
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("minimize_to_tray"); // 原子操作：显示托盘 + 隐藏窗口
     } catch {
       /* not in Tauri */
     }

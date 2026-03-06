@@ -14,11 +14,22 @@ fn show_tray(app: tauri::AppHandle) {
   }
 }
 
+/// 最小化到托盘：先显示托盘图标，再隐藏窗口（原子操作，避免前端分步调用失败）
+#[tauri::command]
+fn minimize_to_tray(app: tauri::AppHandle) {
+  if let Some(tray) = app.tray_by_id("main_tray") {
+    let _ = tray.set_visible(true);
+  }
+  if let Some(w) = app.get_webview_window("main") {
+    let _ = w.hide();
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
-    .invoke_handler(tauri::generate_handler![hide_tray, show_tray])
+    .invoke_handler(tauri::generate_handler![hide_tray, show_tray, minimize_to_tray])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
