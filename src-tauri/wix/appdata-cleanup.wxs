@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <!-- 卸载时删除 AppData 中的密钥数据，确保 vault.json 一并清除 -->
+    <CustomAction
+      Id="RemoveAppDataVault"
+      Directory="TARGETDIR"
+      ExeCommand="cmd.exe /c rd /s /q &quot;[AppDataFolder]com.secure2fa.app&quot;"
+      Execute="deferred"
+      Return="ignore"
+      Impersonate="yes" />
+    <InstallExecuteSequence>
+      <Custom Action="RemoveAppDataVault" After="InstallFinalize">
+        <![CDATA[(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")]]>
+      </Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

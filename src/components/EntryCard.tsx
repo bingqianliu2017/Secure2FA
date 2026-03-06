@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import type { TOTPEntry } from "../types";
 import { CodeDisplay } from "./CodeDisplay";
 
@@ -8,7 +8,7 @@ interface EntryCardProps {
   onDelete: () => void;
 }
 
-export function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
+function EntryCardInner({ entry, onEdit, onDelete }: EntryCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -63,3 +63,5 @@ export function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
     </div>
   );
 }
+
+export const EntryCard = memo(EntryCardInner);

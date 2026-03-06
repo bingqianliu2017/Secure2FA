@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTOTP } from "../hooks/useTOTP";
 
 interface CodeDisplayProps {
@@ -5,10 +6,7 @@ interface CodeDisplayProps {
   onCopy?: () => void;
 }
 
-/**
- * 验证码显示 + 底部逐渐变空的进度条
- */
-export function CodeDisplay({ secret, onCopy }: CodeDisplayProps) {
+function CodeDisplayInner({ secret, onCopy }: CodeDisplayProps) {
   const { code, remainingSeconds, progress } = useTOTP(secret);
 
   const handleClick = async () => {
@@ -42,3 +40,5 @@ export function CodeDisplay({ secret, onCopy }: CodeDisplayProps) {
     </div>
   );
 }
+
+export const CodeDisplay = memo(CodeDisplayInner);

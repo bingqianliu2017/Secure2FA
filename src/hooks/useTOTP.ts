@@ -1,28 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getTOTPCode, getRemainingSeconds, getProgress } from "../core/totp";
 
 /**
  * TOTP 验证码 + 倒计时 Hook
- * 每秒刷新，用于驱动进度条和 code 显示
+ * 每秒仅更新进度条（同步、单次 setState），验证码仅在 30 秒窗口切换时重新计算
  */
 export function useTOTP(secret: string) {
   const [code, setCode] = useState("");
-  const [remainingSeconds, setRemainingSeconds] = useState(30);
-  const [progress, setProgress] = useState(1);
+  const [tickState, setTickState] = useState({ remainingSeconds: 30, progress: 1 });
+  const lastWindowRef = useRef(-1);
 
   useEffect(() => {
     if (!secret) {
       setCode("------");
-      setRemainingSeconds(30);
-      setProgress(1);
+      setTickState({ remainingSeconds: 30, progress: 1 });
       return;
     }
 
-    const tick = async () => {
-      const c = await getTOTPCode(secret);
-      setCode(c);
-      setRemainingSeconds(getRemainingSeconds());
-      setProgress(getProgress());
+    const tick = () => {
+      const now = Date.now();
+      const windowIndex = Math.floor(now / 1000 / 30);
+      const rs = getRemainingSeconds();
+      const p = getProgress();
+
+      setTickState({ remainingSeconds: rs, progress: p });
+
+      if (windowIndex !== lastWindowRef.current) {
+        lastWindowRef.current = windowIndex;
+        getTOTPCode(secret).then(setCode);
+      }
     };
 
     tick();
@@ -30,5 +36,5 @@ export function useTOTP(secret: string) {
     return () => clearInterval(timer);
   }, [secret]);
 
-  return { code, remainingSeconds, progress };
+  return { code, remainingSeconds: tickState.remainingSeconds, progress: tickState.progress };
 }

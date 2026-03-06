@@ -13,12 +13,17 @@
     "core:window:allow-minimize",
     "core:window:allow-close",
     "core:window:allow-hide",
+    "core:window:allow-show",
     "core:window:allow-destroy",
     "core:window:allow-toggle-maximize",
     "fs:default",
+    "fs:allow-appdata-write-recursive",
     {
       "identifier": "fs:scope",
-      "allow": ["$APPDATA/Secure2FA", "$APPDATA/Secure2FA/*"]
+      "allow": [
+        { "path": "$APPDATA/Secure2FA" },
+        { "path": "$APPDATA/Secure2FA/**" }
+      ]
     }
   ]
 }

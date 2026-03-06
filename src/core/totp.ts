@@ -6,6 +6,9 @@
 const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const TOTP_PERIOD = 30;
 
+/** 缓存 CryptoKey，避免每秒重复 importKey（昂贵操作） */
+const keyCache = new Map<string, CryptoKey>();
+
 /**
  * Base32 解码为 Uint8Array
  */
@@ -34,11 +37,22 @@ export async function getTOTPCode(secret: string): Promise<string> {
     const key = secret.trim().replace(/\s/g, "").toUpperCase();
     if (key.length < 16) return "------";
 
-    const byteKey = decodeBase32(key);
-    const keyBuf = byteKey.buffer.slice(
-      byteKey.byteOffset,
-      byteKey.byteOffset + byteKey.byteLength
-    ) as ArrayBuffer;
+    let cryptoKey = keyCache.get(key);
+    if (!cryptoKey) {
+      const byteKey = decodeBase32(key);
+      const keyBuf = byteKey.buffer.slice(
+        byteKey.byteOffset,
+        byteKey.byteOffset + byteKey.byteLength
+      ) as ArrayBuffer;
+      cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        keyBuf,
+        { name: "HMAC", hash: "SHA-1" },
+        false,
+        ["sign"]
+      );
+      keyCache.set(key, cryptoKey);
+    }
 
     const counter = Math.floor(Date.now() / 1000 / TOTP_PERIOD);
     const counterHex = counter.toString(16).padStart(16, "0");
@@ -49,14 +63,6 @@ export async function getTOTPCode(secret: string): Promise<string> {
       counterBytes.byteOffset,
       counterBytes.byteOffset + counterBytes.byteLength
     ) as ArrayBuffer;
-
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      keyBuf,
-      { name: "HMAC", hash: "SHA-1" },
-      false,
-      ["sign"]
-    );
 
     const signature = await crypto.subtle.sign("HMAC", cryptoKey, counterBuf);
     const hmac = new Uint8Array(signature);

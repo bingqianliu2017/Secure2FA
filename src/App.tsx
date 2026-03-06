@@ -36,6 +36,18 @@ export default function App() {
 
   useEffect(() => {
     loadVault().then(setVault);
+    // 启动时窗口为 hidden，待首次渲染后再显示，避免白屏
+    const show = async () => {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        const { invoke } = await import("@tauri-apps/api/core");
+        await getCurrentWindow().show();
+        await invoke("hide_tray"); // 窗口可见时隐藏托盘，仅保留任务栏
+      } catch {
+        /* not in Tauri */
+      }
+    };
+    show();
   }, []);
 
   const handleSaveEntry = async (name: string, secret: string) => {
@@ -58,17 +70,27 @@ export default function App() {
     }
 
     const nextVault = { ...vault, entries: nextEntries };
-    await saveVault(nextVault);
-    setVault(nextVault);
-    setEditingEntry(null);
-    setView("main");
+    try {
+      await saveVault(nextVault);
+      setVault(nextVault);
+      setEditingEntry(null);
+      setView("main");
+    } catch (e) {
+      console.error("保存失败:", e);
+      alert("保存失败，请检查应用是否有写入权限: " + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   const handleDeleteEntry = async (id: string) => {
     const nextEntries = vault.entries.filter((e) => e.id !== id);
     const nextVault = { ...vault, entries: nextEntries };
-    await saveVault(nextVault);
-    setVault(nextVault);
+    try {
+      await saveVault(nextVault);
+      setVault(nextVault);
+    } catch (e) {
+      console.error("删除保存失败:", e);
+      alert("保存失败: " + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   if (view === "add" || view === "edit") {
